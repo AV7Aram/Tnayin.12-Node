@@ -12,7 +12,21 @@ app.get('/', async (req, res) => {
 app.get('/api/users', async (req, res) => {
     const data = await readFile('db', 'users.json');
     const users = JSON.parse(data);
-    sendResponse(res, 200, users);
+    const { name } = req.query;
+
+    if (name) {
+        const filteredUsers = users.filter(user =>
+            user.name.toLowerCase().includes(name.toLowerCase())
+        );
+
+        if (filteredUsers.length > 0) {
+            sendResponse(res, 200, filteredUsers);
+        } else {
+            sendResponse(res, 404, { message: 'No users found with that name' });
+        }
+    } else {
+        sendResponse(res, 200, users);
+    }
 });
 
 app.get('/api/users/:id', async (req, res) => {
