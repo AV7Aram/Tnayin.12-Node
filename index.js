@@ -12,20 +12,28 @@ app.get('/', async (req, res) => {
 app.get('/api/users', async (req, res) => {
     const data = await readFile('db', 'users.json');
     const users = JSON.parse(data);
-    const { name } = req.query;
+    const { name, age } = req.query;
+
+    let filteredUsers = users;
 
     if (name) {
-        const filteredUsers = users.filter(user =>
+        filteredUsers = filteredUsers.filter(user => 
             user.name.toLowerCase().includes(name.toLowerCase())
         );
+    }
 
-        if (filteredUsers.length > 0) {
-            sendResponse(res, 200, filteredUsers);
-        } else {
-            sendResponse(res, 404, { message: 'No users found with that name' });
+    if (age) {
+        if (age === 'min') {
+            filteredUsers = filteredUsers.toSorted((a, b) => a.age - b.age)
+        } else if (age === 'max') {
+            filteredUsers = filteredUsers.toSorted((a, b) => b.age - a.age)
         }
+    }
+
+    if (filteredUsers.length > 0) {
+        sendResponse(res, 200, filteredUsers);
     } else {
-        sendResponse(res, 200, users);
+        sendResponse(res, 404, { message: 'No users found' });
     }
 });
 
