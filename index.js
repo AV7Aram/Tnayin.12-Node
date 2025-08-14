@@ -2,17 +2,19 @@ const express = require('express');
 const { readFile } = require('./helpers/readFile');
 const { sendResponse } = require('./helpers/sendResponse');
 const { readData } = require('./middleware/readData');
+const { validateEmail } = require('./middleware/validateEmail');
+const { validatePassword } = require('./middleware/validatePassword');
 const app = express();
 
-app.use(readData)
+app.use(express.json());
 
 app.get('/', async (req, res) => {
     const html = await readFile('pages', 'index.html');
     sendResponse(res, 200, html, 'text/html');
 })
 
-app.get('/api/users', async (req, res) => {
-    const {users} = res.locals;
+app.get('/api/users', readData, async (req, res) => {
+    const { users } = res.locals;
     const { name, age } = req.query;
     let filteredUsers = users;
     if (name) {
@@ -36,7 +38,7 @@ app.get('/api/users', async (req, res) => {
     }
 });
 
-app.get('/api/users/:id', async (req, res) => {
+app.get('/api/users/:id', readData, async (req, res) => {
     const { id } = req.params;
     const { users } = res.locals;
     const user = users.find(user => user.id === id);
@@ -46,6 +48,11 @@ app.get('/api/users/:id', async (req, res) => {
     } else {
         sendResponse(res, 404, { message: 'User not found' });
     }
+});
+
+app.post('/api/login', validateEmail, validatePassword, (req, res) => {
+    const user = res.locals.user;
+    sendResponse(res, 200, { message: 'Login successful', user });
 });
 
 app.use(async (req, res) => {
