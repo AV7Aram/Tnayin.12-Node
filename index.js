@@ -1,8 +1,10 @@
 const express = require('express');
-const path = require('path');
 const { readFile } = require('./helpers/readFile');
 const { sendResponse } = require('./helpers/sendResponse');
+const { readData } = require('./middleware/readData');
 const app = express();
+
+app.use(readData)
 
 app.get('/', async (req, res) => {
     const html = await readFile('pages', 'index.html');
@@ -10,14 +12,11 @@ app.get('/', async (req, res) => {
 })
 
 app.get('/api/users', async (req, res) => {
-    const data = await readFile('db', 'users.json');
-    const users = JSON.parse(data);
+    const {users} = res.locals;
     const { name, age } = req.query;
-
     let filteredUsers = users;
-
     if (name) {
-        filteredUsers = filteredUsers.filter(user => 
+        filteredUsers = filteredUsers.filter(user =>
             user.name.toLowerCase().includes(name.toLowerCase())
         );
     }
@@ -39,8 +38,7 @@ app.get('/api/users', async (req, res) => {
 
 app.get('/api/users/:id', async (req, res) => {
     const { id } = req.params;
-    const data = await readFile('db', 'users.json');
-    const users = JSON.parse(data)
+    const { users } = res.locals;
     const user = users.find(user => user.id === id);
 
     if (user) {
@@ -54,6 +52,5 @@ app.use(async (req, res) => {
     const errorPage = await readFile('pages', 'error.html');
     sendResponse(res, 404, errorPage, 'text/html')
 });
-
 
 app.listen(3000, () => console.log('Server is running'))
